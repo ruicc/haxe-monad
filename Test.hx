@@ -45,14 +45,45 @@ class Test
 		var b = new A(4);
 		trace("monoid:" + a.mappend(b));
 		
-		var rwse = new RWSEM(new A(0)); // set mempty.
-		var c = rwse.pure(1).bind(function(a) {
-		return rwse.pure(2).bind(function(b) {
-		return rwse.pure(3).bind(function(c) {
-		return rwse.pure(a + b + c);
-		});
-		});
-		});
-		trace("RWSE:" + c.runRWSE("reader", "state"));
+		var c = RWSEM.Pure(1).bind(function(a) {
+		return RWSEM.Pure(2).bind(function(b) {
+		return RWSEM.Get().bind(function(get) {
+		return RWSEM.Pure(3).bind(function(c) {
+		return RWSEM.Put(888).bind(function(_) {
+		return RWSEM.Ask().bind(function(d) {
+		return RWSEM.Tell(new A(1)).bind(function(_) {
+		return RWSEM.Tell(new A(2)).bind(function(_) {
+		return RWSEM.Tell(new A(3)).bind(function(_) {
+		return RWSEM.Tell(new A(4)).bind(function(_) {
+		return RWSEM.Tell(new A(5)).bind(function(_) {
+		return RWSEM.Pure(a + b + c + d + get);
+		}); }); }); }); }); }); }); }); }); }); });
+		trace("RWSE:" + c.runRWSE(42, -32, new A(0)));
+		
+		var e = RWSEM.CatchError(
+		
+			// Compose throwable monad..
+			RWSEM.Pure(1).bind(function(a) {
+			return RWSEM.Pure(2).bind(function(b) {
+			return RWSEM.ThrowError('Error').bind(function(_) { // throwed!!!
+			return RWSEM.Get().bind(function(get) {
+			return RWSEM.Pure(3).bind(function(c) {
+			return RWSEM.Put(888).bind(function(_) {
+			return RWSEM.Ask().bind(function(d) {
+			return RWSEM.Tell(new A(1)).bind(function(_) {
+			return RWSEM.Tell(new A(2)).bind(function(_) {
+			return RWSEM.Tell(new A(3)).bind(function(_) {
+			return RWSEM.Tell(new A(4)).bind(function(_) {
+			return RWSEM.Tell(new A(5)).bind(function(_) {
+			return RWSEM.Pure((a + b + c + d + get).toString());
+			}); }); }); }); }); }); }); }); }); }); }); }),
+
+			// Error handler
+			function(err) {
+				return RWSEM.Pure(err + ' catched!');
+			}
+		);
+
+		trace("RWSE-throw-catch:" + e.runRWSE(42, -32, new A(0)));
 	}
 }
