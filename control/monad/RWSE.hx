@@ -12,8 +12,21 @@ enum RWSE<R, W, S, E, A>
 	RunRWSE(v: R -> S -> Either<E, { value: A, state: S, write: Monoid<W> }>);
 }
 
-class RWSEM
+class RWSEM<R, W, S, E, A>
 {
+	public var mempty: Monoid<W>;
+
+	public function new(w: Monoid<W>)
+	{
+		this.mempty = w;
+	}
+
+	// Helper Method of Pure
+	inline public function pure(a: A): RWSE<R, W, S, E, A>
+	{
+		return RWSEM.Pure(a, this.mempty);
+	}
+
 	inline static public function rwse<R, W, S, E, A>
 		(run: R -> S -> Either<E, { value: A, state: S, write: Monoid<W> }>): RWSE<R, W, S, E, A>
 	{

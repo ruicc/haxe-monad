@@ -45,10 +45,11 @@ class Test
 		var b = new A(4);
 		trace("monoid:" + a.mappend(b));
 		
-		var c = RWSEM.Pure(1, new A(2)).bind(function(a) {
-		return RWSEM.Pure(2, new A(3)).bind(function(b) {
-		return RWSEM.Pure(3, new A(4)).bind(function(c) {
-		return RWSEM.Pure(a + b + c, new A(5));
+		var rwse = new RWSEM(new A(0)); // set mempty.
+		var c = rwse.pure(1).bind(function(a) {
+		return rwse.pure(2).bind(function(b) {
+		return rwse.pure(3).bind(function(c) {
+		return rwse.pure(a + b + c);
 		});
 		});
 		});
